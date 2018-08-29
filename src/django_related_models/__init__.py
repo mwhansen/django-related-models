@@ -5,3 +5,7 @@ __version__ = '0.1.0'
 
 __all__ = []
 
+
+from .related_models import get_related_objects
+from .related_models import ModelMap
+from .related_models import RelatedModels
