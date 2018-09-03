@@ -26,7 +26,10 @@ setup(
     name='django-related-models',
     version='0.1.0',
     license='BSD 3-Clause License',
-    description='A library designed such that, when provided with a model instance it will return a QuerySet for the rows that are associated with that model instance.',
+    description=(
+        'A library designed such that, when provided with a model instance it will return a '
+        'QuerySet for the rows that are associated with that model instance.'
+    ),
     long_description='%s\n%s' % (
         re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
         re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
@@ -50,11 +53,11 @@ setup(
         'Framework :: Django',
         'Framework :: Django :: 1.11',
         'Framework :: Django :: 2.0',
+        'Framework :: Django :: 2.1',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 2.7.15',
+        'Programming Language :: Python :: 3.5.6',
+        'Programming Language :: Python :: 3.6.6',
         'Topic :: Utilities',
     ],
     keywords=[

@@ -1,18 +1,47 @@
 import abc
 
 from django.test import TestCase
+from test_app_1.models import MockPersonLocation
+from test_app_1.models import MockPet
+from test_app_2.models import MockTaggedItem
+from tests.factories import PersonFactory
+from tests.factories import PersonLocationFactory
+from tests.factories import PetFactory
+from tests.factories import TaggedItemFactory
 
 from django_related_models.related_models import ModelMap
 from django_related_models.related_models import RelatedModels
+from django_related_models.related_models import get_related_objects
 
-from .factories import PersonFactory
-from .factories import PetFactory
-from .factories import PersonLocationFactory
-from .factories import TaggedItemFactory
-from .models import MockPerson
-from .models import MockPet
-from .models import MockPersonLocation
-from .models import MockTaggedItem
+
+class GetRelatedModelsTests(TestCase):
+
+    def test_get_related_fk_objects(self):
+        person = PersonFactory.create()
+        for i in range(3):
+            PetFactory.create(owner=person)
+        location = PersonLocationFactory.create(owner=person)
+
+        related_objects = get_related_objects(person)
+        self.assertEqual(len(related_objects[MockPet.owner.field]), 3)
+
+        for pet in related_objects[MockPet.owner.field]:
+            self.assertEqual(pet.owner.id, person.id)
+        self.assertEqual(len(related_objects[MockPersonLocation.owner.field]), 1)
+
+        for location in related_objects[MockPersonLocation.owner.field]:
+            self.assertEqual(location.owner.id, person.id)
+
+    def test_get_related_generic_fk_objects(self):
+        person = PersonFactory.create()
+        tagged_item = TaggedItemFactory.create(
+            tag='dog-person',
+            content_object=person
+        )
+        related_objects = get_related_objects(person)
+        self.assertEqual(len(related_objects[MockTaggedItem.content_object]), 1)
+        for tagged_item in related_objects[MockTaggedItem.content_object]:
+            self.assertEqual(tagged_item.content_object.id, person.id)
 
 
 class ModelMapTestsMixin(object):
@@ -146,4 +175,4 @@ class RelatedModelsTests(TestCase):
 
     def test_should_consider_included_app_false(self):
         rm = RelatedModels(include_apps=[MockPet._meta.app_label])
-        self.assertFalse(rm.should_consider(MockPersonLocation))
+        self.assertFalse(rm.should_consider(MockTaggedItem))

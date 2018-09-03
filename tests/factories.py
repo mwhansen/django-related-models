@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 import factory
 
 from .models import MockPerson
-from .models import MockPet
 from .models import MockPersonLocation
+from .models import MockPet
 from .models import MockTaggedItem
 
 

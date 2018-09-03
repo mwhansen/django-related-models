@@ -1,8 +1,6 @@
+from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.apps import apps
-from django.db.models import Field
-from django.db.models import Model
 
 
 class GetDefaultManagerMixin(object):
@@ -146,7 +144,7 @@ class RelatedModels(GetDefaultManagerMixin, object):
         return (
             getattr(field, 'related_model', None) == model and
             field.concrete and
-            not field.many_to_many # handled by auto-created models
+            not field.many_to_many  # handled by auto-created models
         )
 
     def should_include_virtual_field(self, field, model):
@@ -221,7 +219,7 @@ class RelatedModels(GetDefaultManagerMixin, object):
 
         :rtype: Dict[Model, List[Field]]
         """
-        referring_models =  {
+        referring_models = {
             other_model: self.get_related_fields(model, other_model)
             for other_model in apps.get_models(include_auto_created=True)
             if self.should_consider(other_model)
