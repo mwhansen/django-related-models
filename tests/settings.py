@@ -1,3 +1,5 @@
+import os
+
 SECRET_KEY = 'roverdotcom'
 
 INSTALLED_APPS = [
@@ -8,9 +10,23 @@ INSTALLED_APPS = [
     'tests.test_app_2',
 ]
 
-DATABASES = {
+TEST_DATABASE = os.environ.get('TEST_DATABASE', 'sqlite')
+
+if TEST_DATABASE == 'mysql':
+    DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'woofwoof',
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'testdb',
+            'USER': 'root',
+            'PASSWORD': '',
+            'HOST': '127.0.0.1',
+            'PORT': 3306,
         }
-}
+    }
+else:
+    DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': 'woofwoof',
+            }
+    }

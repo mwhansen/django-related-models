@@ -1,13 +1,13 @@
 import abc
 
 from django.test import TestCase
-from test_app_1.models import MockPersonLocation
-from test_app_1.models import MockPet
-from test_app_2.models import MockTaggedItem
 from tests.factories import PersonFactory
 from tests.factories import PersonLocationFactory
 from tests.factories import PetFactory
 from tests.factories import TaggedItemFactory
+from tests.test_app_1.models import MockPersonLocation
+from tests.test_app_1.models import MockPet
+from tests.test_app_2.models import MockTaggedItem
 
 from django_related_models.related_models import ModelMap
 from django_related_models.related_models import RelatedModels

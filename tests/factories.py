@@ -1,11 +1,10 @@
 from __future__ import unicode_literals
 
 import factory
-
-from .models import MockPerson
-from .models import MockPersonLocation
-from .models import MockPet
-from .models import MockTaggedItem
+from tests.test_app_1.models import MockPerson
+from tests.test_app_1.models import MockPersonLocation
+from tests.test_app_1.models import MockPet
+from tests.test_app_2.models import MockTaggedItem
 
 
 class PersonFactory(factory.DjangoModelFactory):
