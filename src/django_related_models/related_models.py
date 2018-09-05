@@ -141,11 +141,16 @@ class RelatedModels(GetDefaultManagerMixin, object):
 
         :rtype: bool
         """
-        return (
-            getattr(field, 'related_model', None) == model and
-            field.concrete and
-            not field.many_to_many  # handled by auto-created models
-        )
+        related_model = getattr(field, 'related_model', None)
+        related_model_matches = related_model == model
+        generic_foreign_key = isinstance(field, GenericForeignKey)
+
+        if generic_foreign_key:
+            return True
+        else:
+            return (
+                related_model_matches and field.concrete and not field.many_to_many
+            )
 
     def should_include_virtual_field(self, field, model):
         """
@@ -190,6 +195,9 @@ class RelatedModels(GetDefaultManagerMixin, object):
         ct = ContentType.objects.get_for_model(model)
         return ct.id in content_type_ids
 
+    def has_virutal_fields(self, model):
+        return hasattr(model._meta, 'virtual_fields')
+
     def get_related_fields(self, model, other_model):
         """
         Returns all of the fields on *other_model* which are (or could be)
@@ -205,12 +213,16 @@ class RelatedModels(GetDefaultManagerMixin, object):
             for field in other_model._meta.get_fields()
             if self.should_include_field(field, model)
         ]
-        virtual_fields = [
-            field
-            for field in other_model._meta.virtual_fields
-            if self.should_include_virtual_field(field, model)
-        ]
-        return real_fields + virtual_fields
+
+        if self.has_virutal_fields(other_model):
+            virtual_fields = [
+                field
+                for field in other_model._meta.virtual_fields
+                if self.should_include_virtual_field(field, model)
+            ]
+            return real_fields + virtual_fields
+        else:
+            return real_fields
 
     def get_referring_models(self, model):
         """
