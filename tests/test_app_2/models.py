@@ -3,11 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
-class MockTaggedItem(models.Model):
+class TaggedItem(models.Model):
     tag = models.SlugField()
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, db_constraint=False)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
-
-    def __str__(self):
-        return self.tag

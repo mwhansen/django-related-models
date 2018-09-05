@@ -5,9 +5,9 @@ from tests.factories import PersonFactory
 from tests.factories import PersonLocationFactory
 from tests.factories import PetFactory
 from tests.factories import TaggedItemFactory
-from tests.test_app_1.models import MockPersonLocation
-from tests.test_app_1.models import MockPet
-from tests.test_app_2.models import MockTaggedItem
+from tests.test_app_1.models import PersonLocation
+from tests.test_app_1.models import Pet
+from tests.test_app_2.models import TaggedItem
 
 from django_related_models.related_models import ModelMap
 from django_related_models.related_models import RelatedModels
@@ -23,13 +23,13 @@ class GetRelatedModelsTests(TestCase):
         location = PersonLocationFactory.create(owner=person)
 
         related_objects = get_related_objects(person)
-        self.assertEqual(len(related_objects[MockPet.owner.field]), 3)
+        self.assertEqual(len(related_objects[Pet.owner.field]), 3)
 
-        for pet in related_objects[MockPet.owner.field]:
+        for pet in related_objects[Pet.owner.field]:
             self.assertEqual(pet.owner.id, person.id)
-        self.assertEqual(len(related_objects[MockPersonLocation.owner.field]), 1)
+        self.assertEqual(len(related_objects[PersonLocation.owner.field]), 1)
 
-        for location in related_objects[MockPersonLocation.owner.field]:
+        for location in related_objects[PersonLocation.owner.field]:
             self.assertEqual(location.owner.id, person.id)
 
     def test_get_related_generic_fk_objects(self):
@@ -39,8 +39,8 @@ class GetRelatedModelsTests(TestCase):
             content_object=person
         )
         related_objects = get_related_objects(person)
-        self.assertEqual(len(related_objects[MockTaggedItem.content_object]), 1)
-        for tagged_item in related_objects[MockTaggedItem.content_object]:
+        self.assertEqual(len(related_objects[TaggedItem.content_object]), 1)
+        for tagged_item in related_objects[TaggedItem.content_object]:
             self.assertEqual(tagged_item.content_object.id, person.id)
 
 
@@ -81,13 +81,13 @@ class ModelMapTests(ModelMapTestsMixin, TestCase):
 
     @classmethod
     def get_field(cls):
-        return MockPet._meta.get_field('owner')
+        return Pet._meta.get_field('owner')
 
     def test_field(self):
         self.assertEqual(self.model_map.field, self.field)
 
     def test_model(self):
-        self.assertEqual(self.model_map.model, MockPet)
+        self.assertEqual(self.model_map.model, Pet)
 
     def test_generic_foreign_key(self):
         self.assertIsNone(self.model_map.generic_foreign_key)
@@ -118,7 +118,7 @@ class ModelMapGenericForeignKeyTests(ModelMapTestsMixin, TestCase):
 
     @classmethod
     def get_field(cls):
-        return MockTaggedItem._meta.get_field('content_object')
+        return TaggedItem._meta.get_field('content_object')
 
     @classmethod
     def get_related_object(cls):
@@ -127,11 +127,11 @@ class ModelMapGenericForeignKeyTests(ModelMapTestsMixin, TestCase):
     def test_field(self):
         self.assertEqual(
             self.model_map.field,
-            MockTaggedItem._meta.get_field('object_id')
+            TaggedItem._meta.get_field('object_id')
         )
 
     def test_model(self):
-        self.assertEqual(self.model_map.model, MockTaggedItem)
+        self.assertEqual(self.model_map.model, TaggedItem)
 
     def test_generic_foreign_key(self):
         self.assertEqual(self.model_map.generic_foreign_key, self.get_field())
@@ -159,20 +159,20 @@ class RelatedModelsTests(TestCase):
         self.related_models = RelatedModels()
 
     def test_should_consider(self):
-        self.assertTrue(self.related_models.should_consider(MockPet))
+        self.assertTrue(self.related_models.should_consider(Pet))
 
     def test_should_consider_excluded_model(self):
-        rm = RelatedModels(exclude=[MockPet])
-        self.assertFalse(rm.should_consider(MockPet))
+        rm = RelatedModels(exclude=[Pet])
+        self.assertFalse(rm.should_consider(Pet))
 
     def test_should_consider_excluded_app(self):
-        rm = RelatedModels(exclude_apps=[MockPet._meta.app_label])
-        self.assertFalse(rm.should_consider(MockPet))
+        rm = RelatedModels(exclude_apps=[Pet._meta.app_label])
+        self.assertFalse(rm.should_consider(Pet))
 
     def test_should_consider_included_app_true(self):
-        rm = RelatedModels(include_apps=[MockPet._meta.app_label])
-        self.assertTrue(rm.should_consider(MockPet))
+        rm = RelatedModels(include_apps=[Pet._meta.app_label])
+        self.assertTrue(rm.should_consider(Pet))
 
     def test_should_consider_included_app_false(self):
-        rm = RelatedModels(include_apps=[MockPet._meta.app_label])
-        self.assertFalse(rm.should_consider(MockTaggedItem))
+        rm = RelatedModels(include_apps=[Pet._meta.app_label])
+        self.assertFalse(rm.should_consider(TaggedItem))
