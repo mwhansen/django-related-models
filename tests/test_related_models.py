@@ -5,6 +5,7 @@ from tests.factories import PersonFactory
 from tests.factories import PersonLocationFactory
 from tests.factories import PetFactory
 from tests.factories import TaggedItemFactory
+from tests.test_app_1.models import Person
 from tests.test_app_1.models import PersonLocation
 from tests.test_app_1.models import Pet
 from tests.test_app_2.models import TaggedItem
@@ -174,3 +175,40 @@ class RelatedModelsTests(TestCase):
     def test_should_consider_included_app_false(self):
         rm = RelatedModels(include_apps=[Pet._meta.app_label])
         self.assertFalse(rm.should_consider(TaggedItem))
+
+    def test_has_generic_foreign_key_to_model_false(self):
+        self.assertFalse(
+            self.related_models.has_generic_foreign_key_to_model(
+                TaggedItem.content_object,
+                Person
+            )
+        )
+
+    def test_has_generic_foreign_key_to_model_true(self):
+        TaggedItemFactory.create(
+            content_object=PersonFactory.create(),
+            tag='dog-person',
+        )
+        self.assertTrue(
+            self.related_models.has_generic_foreign_key_to_model(
+                TaggedItem.content_object,
+                Person
+            )
+        )
+
+    def test_has_generic_foreign_key_to_model_true_cached(self):
+        TaggedItemFactory.create(
+            content_object=PersonFactory.create(),
+            tag='dog-person',
+        )
+        self.related_models.has_generic_foreign_key_to_model(
+            TaggedItem.content_object,
+            Person
+        )
+        with self.assertNumQueries(0):
+            self.assertTrue(
+                self.related_models.has_generic_foreign_key_to_model(
+                    TaggedItem.content_object,
+                    Person
+                )
+            )
