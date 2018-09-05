@@ -255,7 +255,7 @@ def get_related_objects(instance, **kwargs):
     referring_models = related_models.get_referring_models(model)
 
     all_related_objects = {}
-    for reffering_model, fields in referring_models.items():
+    for referring_model, fields in referring_models.items():
         for field in fields:
             objects_map = ModelMap(type(instance), field)
             related_objects = objects_map.get_related_objects(instance, **kwargs)
