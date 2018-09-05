@@ -15,33 +15,35 @@ from django_related_models.related_models import get_related_objects
 
 
 class GetRelatedModelsTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super(GetRelatedModelsTests, cls).setUpTestData()
+        cls.person = PersonFactory.create()
 
     def test_get_related_fk_objects(self):
-        person = PersonFactory.create()
-        for i in range(3):
-            PetFactory.create(owner=person)
-        location = PersonLocationFactory.create(owner=person)
+        pets = PetFactory.create_batch(3, owner=self.person)
+        location = PersonLocationFactory.create(owner=self.person)
 
-        related_objects = get_related_objects(person)
-        self.assertEqual(len(related_objects[Pet.owner.field]), 3)
-
-        for pet in related_objects[Pet.owner.field]:
-            self.assertEqual(pet.owner.id, person.id)
-        self.assertEqual(len(related_objects[PersonLocation.owner.field]), 1)
-
-        for location in related_objects[PersonLocation.owner.field]:
-            self.assertEqual(location.owner.id, person.id)
+        related_objects = get_related_objects(self.person)
+        self.assertEqual(
+            {field: set(objs) for field, objs in related_objects.items()},
+            {
+                Pet.owner.field: set(pets),
+                PersonLocation.owner.field: {location}
+            }
+        )
 
     def test_get_related_generic_fk_objects(self):
-        person = PersonFactory.create()
         tagged_item = TaggedItemFactory.create(
             tag='dog-person',
-            content_object=person
+            content_object=self.person
         )
-        related_objects = get_related_objects(person)
-        self.assertEqual(len(related_objects[TaggedItem.content_object]), 1)
-        for tagged_item in related_objects[TaggedItem.content_object]:
-            self.assertEqual(tagged_item.content_object.id, person.id)
+        self.assertEqual(
+            get_related_objects(self.person),
+            {
+                TaggedItem.content_object: [tagged_item]
+            }
+        )
 
 
 class ModelMapTestsMixin(object):
