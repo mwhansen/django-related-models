@@ -20,7 +20,7 @@ class GetDefaultManagerMixin(object):
         return model._default_manager
 
 
-class ModelMap(GetDefaultManagerMixin, object):
+class FieldPreimage(GetDefaultManagerMixin, object):
     """
     This purpose of this class is to hold information and provide
     utility functions about getting all instances where *field* is
@@ -30,6 +30,7 @@ class ModelMap(GetDefaultManagerMixin, object):
 
     The :attr:`target_field` attribute is the field on the type
     of :attr:`instance`.
+
 
     This class also abstracts away some of the difference between
     normal foreign keys and generic foreign keys.  In the case of a
@@ -64,7 +65,7 @@ class ModelMap(GetDefaultManagerMixin, object):
         :rtype: :class:`django.db.models.manager.Manager`
         """
         model = model or self.model
-        return super(ModelMap, self).get_default_manager(model)
+        return super(FieldPreimage, self).get_default_manager(model)
 
     def get_related_objects(self, instance, **kwargs):
         """
@@ -230,7 +231,7 @@ def get_related_objects(instance, **kwargs):
     all_related_objects = {}
     for fields in referring_models.values():
         for field in fields:
-            objects_map = ModelMap(type(instance), field)
+            objects_map = FieldPreimage(type(instance), field)
             related_objects = objects_map.get_related_objects(instance, **kwargs)
             if related_objects:
                 all_related_objects[field] = [obj for obj in related_objects]

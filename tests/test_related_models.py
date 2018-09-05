@@ -9,7 +9,7 @@ from tests.test_app_1.models import PersonLocation
 from tests.test_app_1.models import Pet
 from tests.test_app_2.models import TaggedItem
 
-from django_related_models.related_models import ModelMap
+from django_related_models.related_models import FieldPreimage
 from django_related_models.related_models import RelatedModels
 from django_related_models.related_models import get_related_objects
 
@@ -46,39 +46,39 @@ class GetRelatedModelsTests(TestCase):
         )
 
 
-class ModelMapTestsMixin(object):
+class FieldPreimageTestsMixin(object):
     __metaclass__ = abc.ABCMeta
 
     @classmethod
     def setUpTestData(cls):
-        super(ModelMapTestsMixin, cls).setUpTestData()
+        super(FieldPreimageTestsMixin, cls).setUpTestData()
         cls.instance = PersonFactory.create()
         cls.field = cls.get_field()
-        cls.model_map = cls.get_model_map()
+        cls.field_preimage = cls.get_field_preimage()
 
     @classmethod
-    def get_model_map(cls, **kwargs):
+    def get_field_preimage(cls, **kwargs):
         kwargs = dict({
             'target_model': type(cls.instance),
             'field': cls.field,
         }, **kwargs)
-        return ModelMap(**kwargs)
+        return FieldPreimage(**kwargs)
 
     @classmethod
     @abc.abstractmethod
     def get_field(cls):
-        pass
+        """
+        Returns the default field to use for :class:`FieldPreimage`.
 
-    @classmethod
-    @abc.abstractmethod
-    def get_related_object(cls):
-        pass
+        :rtype: :class:`django.db.models.fields.Field
+
+        """
 
 
-class ModelMapTests(ModelMapTestsMixin, TestCase):
+class FieldPreimageTests(FieldPreimageTestsMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
-        super(ModelMapTests, cls).setUpTestData()
+        super(FieldPreimageTests, cls).setUpTestData()
         cls.pet = PetFactory.create(owner=cls.instance)
 
     @classmethod
@@ -86,33 +86,33 @@ class ModelMapTests(ModelMapTestsMixin, TestCase):
         return Pet._meta.get_field('owner')
 
     def test_field(self):
-        self.assertEqual(self.model_map.field, self.field)
+        self.assertEqual(self.field_preimage.field, self.field)
 
     def test_model(self):
-        self.assertEqual(self.model_map.model, Pet)
+        self.assertEqual(self.field_preimage.model, Pet)
 
     def test_generic_foreign_key(self):
-        self.assertIsNone(self.model_map.generic_foreign_key)
+        self.assertIsNone(self.field_preimage.generic_foreign_key)
 
     def test_get_related_objects(self):
         new_pet = PetFactory.create(owner=self.instance)
         self.assertEqual(
-            list(self.model_map.get_related_objects(self.instance)),
+            list(self.field_preimage.get_related_objects(self.instance)),
             [self.pet, new_pet]
         )
 
     def test_get_related_objects_extra_kwargs(self):
         new_pet = PetFactory.create(owner=self.instance)
         self.assertEqual(
-            list(self.model_map.get_related_objects(self.instance, pk=new_pet.pk)),
+            list(self.field_preimage.get_related_objects(self.instance, pk=new_pet.pk)),
             [new_pet]
         )
 
 
-class ModelMapGenericForeignKeyTests(ModelMapTestsMixin, TestCase):
+class FieldPreimageGenericForeignKeyTests(FieldPreimageTestsMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
-        super(ModelMapGenericForeignKeyTests, cls).setUpTestData()
+        super(FieldPreimageGenericForeignKeyTests, cls).setUpTestData()
         cls.tagged_item = TaggedItemFactory.create(
             tag='dog-person',
             content_object=cls.instance
@@ -122,25 +122,21 @@ class ModelMapGenericForeignKeyTests(ModelMapTestsMixin, TestCase):
     def get_field(cls):
         return TaggedItem._meta.get_field('content_object')
 
-    @classmethod
-    def get_related_object(cls):
-        return cls.tagged_item
-
     def test_field(self):
         self.assertEqual(
-            self.model_map.field,
+            self.field_preimage.field,
             TaggedItem._meta.get_field('object_id')
         )
 
     def test_model(self):
-        self.assertEqual(self.model_map.model, TaggedItem)
+        self.assertEqual(self.field_preimage.model, TaggedItem)
 
     def test_generic_foreign_key(self):
-        self.assertEqual(self.model_map.generic_foreign_key, self.get_field())
+        self.assertEqual(self.field_preimage.generic_foreign_key, self.get_field())
 
     def test_get_related_objects(self):
         self.assertEqual(
-            list(self.model_map.get_related_objects(self.instance)),
+            list(self.field_preimage.get_related_objects(self.instance)),
             [self.tagged_item]
         )
 
@@ -150,7 +146,7 @@ class ModelMapGenericForeignKeyTests(ModelMapTestsMixin, TestCase):
             content_object=self.instance
         )
         self.assertEqual(
-            list(self.model_map.get_related_objects(self.instance, pk=tagged_item.pk)),
+            list(self.field_preimage.get_related_objects(self.instance, pk=tagged_item.pk)),
             [tagged_item]
         )
 
