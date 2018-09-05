@@ -23,14 +23,13 @@ class GetDefaultManagerMixin(object):
 class ModelMap(GetDefaultManagerMixin, object):
     """
     This purpose of this class is to hold information and provide
-    utility functions about getting all instances where :attr:`field` is
-    a foreign key to :attr:`instance` which is of type :attr:`instance_type`.
+    utility functions about getting all instances where *field* is
+    a foreign key to an instance of *target_model*.
 
-    The :attr:`model` is the model associated to :attr:`field`.
+    The :attr:`model` is the model associated to *field*.
 
     The :attr:`target_field` attribute is the field on the type
-    of :attr:`instance`.  Similarly, :attr:`target_model`
-    is the model of :attr:`instance`.
+    of :attr:`instance`.
 
     This class also abstracts away some of the difference between
     normal foreign keys and generic foreign keys.  In the case of a
@@ -39,14 +38,14 @@ class ModelMap(GetDefaultManagerMixin, object):
     :attr:`target_field` will be the primary key on :attr:`target_model`.
     """
 
-    def __init__(self, instance_type, field):
+    def __init__(self, target_model, field):
         if isinstance(field, GenericForeignKey):
             # For generic foreign keys, fk_field is the name of the
             # field which needs to be updated and the target field
             # will be the primary key of *model*
             self.generic_foreign_key = field
             self.field = field.model._meta.get_field(field.fk_field)
-            self.target_field = instance_type._meta.pk
+            self.target_field = target_model._meta.pk
         else:
             self.generic_foreign_key = None
             self.field = field
@@ -54,6 +53,7 @@ class ModelMap(GetDefaultManagerMixin, object):
 
         self.model = self.field.model
         self.target_model = self.target_field.model
+        assert self.target_model == target_model
 
     def get_default_manager(self, model=None):
         """

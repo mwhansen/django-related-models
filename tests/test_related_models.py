@@ -57,7 +57,7 @@ class ModelMapTestsMixin(object):
     @classmethod
     def get_model_map(cls, **kwargs):
         kwargs = dict({
-            'instance_type': type(cls.instance),
+            'target_model': type(cls.instance),
             'field': cls.field,
         }, **kwargs)
         return ModelMap(**kwargs)
