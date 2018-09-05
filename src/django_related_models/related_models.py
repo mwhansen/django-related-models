@@ -216,23 +216,63 @@ class RelatedModels(GetDefaultManagerMixin, object):
             if fields
         }
 
+    def _get_related_objects_iterator(self, instance):
+        """
+        An iterator for internal use which yields a tuple of a field
+        and an object related to *instance* via that field.
+        """
+        model = instance._meta.model
+        referring_models = self.get_referring_models(model)
 
-def get_related_objects(instance, **kwargs):
+        for fields in referring_models.values():
+            for field in fields:
+                objects_map = FieldPreimage(type(instance), field)
+                related_objects = objects_map.get_related_objects(instance)
+                for obj in related_objects.iterator():
+                    yield field, obj
+
+    def get_related_objects_mapping(self, instance):
+        """
+        Returns an dictionary mapping fields to a set of the objects related to
+        *instance* via that field.
+
+        :rtype: Dict[Field, List[Object]]
+        """
+        groups = itertools.groupby(
+            self._get_related_objects_iterator(instance),
+            key=lambda pair: pair[0]
+        )
+        return {
+            field: set(obj for field, obj in pairs)
+            for field, pairs in groups
+        }
+
+    def get_related_objects(self, instance):
+        """
+        Returns an iterator for all of the of all the models which have a
+        (possibly generic) foreign key to *instance*.
+
+        :rtype: Iterator[object]
+        """
+        for _, obj in self._get_related_objects_iterator(instance):
+            yield obj
+
+
+def get_related_objects(instance):
     """
-    Returns all the instances of all the models which have a (possibly generic) foreign key to
-    *instance*.
+    Returns an iterator for all of the of all the models which have a
+    (possibly generic) foreign key to *instance*.
+
+    :rtype: Iterator[object]
+    """
+    return RelatedModels().get_related_objects(instance)
+
+
+def get_related_objects_mapping(instance):
+    """
+    Returns an dictionary mapping fields to a set of the objects related to
+    *instance* via that field.
 
     :rtype: Dict[Field, List[Object]]
     """
-    model = instance._meta.model
-    related_models = RelatedModels()
-    referring_models = related_models.get_referring_models(model)
-
-    all_related_objects = {}
-    for fields in referring_models.values():
-        for field in fields:
-            objects_map = FieldPreimage(type(instance), field)
-            related_objects = objects_map.get_related_objects(instance, **kwargs)
-            if related_objects:
-                all_related_objects[field] = [obj for obj in related_objects]
-    return all_related_objects
+    return RelatedModels().get_related_objects_mapping(instance)

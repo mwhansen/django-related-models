@@ -13,21 +13,29 @@ from tests.test_app_2.models import TaggedItem
 from django_related_models.related_models import FieldPreimage
 from django_related_models.related_models import RelatedModels
 from django_related_models.related_models import get_related_objects
+from django_related_models.related_models import get_related_objects_mapping
 
 
-class GetRelatedModelsTests(TestCase):
+class GetRelatedObjectsMappingTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        super(GetRelatedModelsTests, cls).setUpTestData()
+        super(GetRelatedObjectsMappingTests, cls).setUpTestData()
         cls.person = PersonFactory.create()
+
+    def test_get_related_objects_custom_related_models(self):
+        rm = RelatedModels(exclude={Pet})
+        PetFactory.create_batch(3, owner=self.person)
+        self.assertEqual(
+            rm.get_related_objects_mapping(self.person),
+            {}
+        )
 
     def test_get_related_fk_objects(self):
         pets = PetFactory.create_batch(3, owner=self.person)
         location = PersonLocationFactory.create(owner=self.person)
 
-        related_objects = get_related_objects(self.person)
         self.assertEqual(
-            {field: set(objs) for field, objs in related_objects.items()},
+            get_related_objects_mapping(self.person),
             {
                 Pet.owner.field: set(pets),
                 PersonLocation.owner.field: {location}
@@ -40,10 +48,44 @@ class GetRelatedModelsTests(TestCase):
             content_object=self.person
         )
         self.assertEqual(
-            get_related_objects(self.person),
+            get_related_objects_mapping(self.person),
             {
-                TaggedItem.content_object: [tagged_item]
+                TaggedItem.content_object: {tagged_item}
             }
+        )
+
+
+class GetRelatedObjectsTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super(GetRelatedObjectsTests, cls).setUpTestData()
+        cls.person = PersonFactory.create()
+
+    def test_get_related_objects_custom_related_models(self):
+        rm = RelatedModels(exclude={Pet})
+        PetFactory.create_batch(3, owner=self.person)
+        self.assertEqual(
+            set(rm.get_related_objects(self.person)),
+            set()
+        )
+
+    def test_get_related_fk_objects(self):
+        pets = PetFactory.create_batch(3, owner=self.person)
+        location = PersonLocationFactory.create(owner=self.person)
+
+        self.assertEqual(
+            set(get_related_objects(self.person)),
+            set(pets) | {location}
+        )
+
+    def test_get_related_generic_fk_objects(self):
+        tagged_item = TaggedItemFactory.create(
+            tag='dog-person',
+            content_object=self.person
+        )
+        self.assertEqual(
+            set(get_related_objects(self.person)),
+            {tagged_item}
         )
 
 
