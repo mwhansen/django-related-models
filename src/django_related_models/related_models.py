@@ -1,3 +1,5 @@
+import itertools
+
 from django.apps import apps
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -141,32 +143,13 @@ class RelatedModels(GetDefaultManagerMixin, object):
 
         :rtype: bool
         """
-        related_model = getattr(field, 'related_model', None)
-        related_model_matches = related_model == model
-        generic_foreign_key = isinstance(field, GenericForeignKey)
+        if isinstance(field, GenericForeignKey):
+            return self.has_generic_foreign_key_to_model(field, model)
 
-        if generic_foreign_key:
-            return True
-        else:
-            return (
-                related_model_matches and field.concrete and not field.many_to_many
-            )
-
-    def should_include_virtual_field(self, field, model):
-        """
-        Returns whether or not the virtual *field* should be considered
-        as a foreign key to *model*.
-
-        Currently, we only support
-        :class:`~django.contrib.contenttypes.fields.GenericForeignKey`
-        field.  Additionally, we check to see if there are rows in
-        the database which reference *model*.
-
-        :rtype: bool
-        """
         return (
-            isinstance(field, GenericForeignKey) and
-            self.has_generic_foreign_key_to_model(field, model)
+            model == getattr(field, 'related_model', None) and
+            field.concrete and
+            not field.many_to_many
         )
 
     def has_generic_foreign_key_to_model(self, field, model):
@@ -195,9 +178,6 @@ class RelatedModels(GetDefaultManagerMixin, object):
         ct = ContentType.objects.get_for_model(model)
         return ct.id in content_type_ids
 
-    def has_virutal_fields(self, model):
-        return hasattr(model._meta, 'virtual_fields')
-
     def get_related_fields(self, model, other_model):
         """
         Returns all of the fields on *other_model* which are (or could be)
@@ -208,21 +188,14 @@ class RelatedModels(GetDefaultManagerMixin, object):
 
         :rtype: List[Field]
         """
-        real_fields = [
-            field
-            for field in other_model._meta.get_fields()
+        all_fields = itertools.chain(
+            other_model._meta.get_fields(),
+            getattr(other_model._meta, 'virtual_fields', [])
+        )
+        return [
+            field for field in all_fields
             if self.should_include_field(field, model)
         ]
-
-        if self.has_virutal_fields(other_model):
-            virtual_fields = [
-                field
-                for field in other_model._meta.virtual_fields
-                if self.should_include_virtual_field(field, model)
-            ]
-            return real_fields + virtual_fields
-        else:
-            return real_fields
 
     def get_referring_models(self, model):
         """
@@ -255,7 +228,7 @@ def get_related_objects(instance, **kwargs):
     referring_models = related_models.get_referring_models(model)
 
     all_related_objects = {}
-    for referring_model, fields in referring_models.items():
+    for fields in referring_models.values():
         for field in fields:
             objects_map = ModelMap(type(instance), field)
             related_objects = objects_map.get_related_objects(instance, **kwargs)
